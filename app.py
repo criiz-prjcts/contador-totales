@@ -95,11 +95,13 @@ if texto and calcular:
         st.download_button("Descargar CSV por fecha", df.to_csv(index=False).encode(), "puntos_por_fecha.csv")
 
     resumen = df.groupby("Equipo")["Puntos"].sum().reset_index().sort_values(by="Puntos", ascending=False)
-    resumen_str = "\n".join([f"{row['Equipo']}: {row['Puntos']} puntos" for _, row in resumen.iterrows()])
+    resumen_str = "\n".join([f"{row['Equipo']}: {row['Puntos']:,} puntos" for _, row in resumen.iterrows()])
 
     st.subheader("🏆 Total por Equipo")
-    st.dataframe(resumen)
+    resumen_format = resumen.copy()
+    resumen_format["Puntos"] = resumen_format["Puntos"].apply(lambda x: f"{x:,}")
+    st.dataframe(resumen_format)
     st.download_button("Descargar CSV resumen", resumen.to_csv(index=False).encode(), "resumen_puntos.csv")
 
-    st.text_area("📋 Resultado total (para copiar):", value=resumen_str, height=150)
-    st.button("Copiar total", on_click=lambda: st.session_state.update({"copiado": True}))
+    st.subheader("📋 Resultado total (para copiar)")
+    st.code(resumen_str, language="markdown")
