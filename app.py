@@ -25,8 +25,9 @@ equipos_validos = set(colegios[colegio_seleccionado])
 # Inputs del usuario
 texto = st.text_area("Pega aquí el historial de mensajes:", height=400)
 desglosado = st.checkbox("¿Mostrar información desglosada por día?", value=True)
+calcular = st.button("Calcular puntos")
 
-if texto:
+if texto and calcular:
     puntos_por_fecha = defaultdict(lambda: defaultdict(int))
     fecha_actual = "Sin fecha"
 
@@ -35,27 +36,43 @@ if texto:
         return equivalencias_personalizadas.get(emoji, emoji)
 
     for linea in texto.splitlines():
+        linea = linea.strip()
+        if not linea:
+            continue
+
         match_fecha = re.match(r"\[\d{1,2}:\d{2},\s*(\d{1,2}/\d{1,2}/\d{4})\]", linea)
         if match_fecha:
             fecha_actual = match_fecha.group(1)
             continue
 
-        for cantidad, emoji in re.findall(r"(\d+)\s+puntos\s+a\s+([^\s]+)", linea):
+        # Aplicar un solo patrón por línea (prioridad alta a baja)
+        match = re.search(r"(\d+)\s+puntos\s+a\s+([^\s]+)", linea)
+        if match:
+            cantidad, emoji = match.groups()
             emoji = normaliza(emoji)
             if emoji in equipos_validos:
                 puntos_por_fecha[fecha_actual][emoji] += int(cantidad)
+            continue
 
-        for emoji, cantidad in re.findall(r"([^\s]+)\s+([\d,]+)\s+puntos", linea):
+        match = re.search(r"([^\s]+)\s+([\d,]+)\s+puntos", linea)
+        if match:
+            emoji, cantidad = match.groups()
             emoji = normaliza(emoji)
             if emoji in equipos_validos:
                 puntos_por_fecha[fecha_actual][emoji] += int(cantidad.replace(",", ""))
+            continue
 
-        for emoji, cantidad in re.findall(r"([^\s]+)[\s]*([\d]+\.[\d]+)", linea):
+        match = re.search(r"([^\s]+)[\s]*([\d]+\.[\d]+)$", linea)
+        if match:
+            emoji, cantidad = match.groups()
             emoji = normaliza(emoji)
             if emoji in equipos_validos:
                 puntos_por_fecha[fecha_actual][emoji] += int(cantidad.replace(".", ""))
+            continue
 
-        for emoji, cantidad in re.findall(r"([^\s]+)\s+0*(\d+)$", linea):
+        match = re.search(r"([^\s]+)\s+0*(\d+)$", linea)
+        if match:
+            emoji, cantidad = match.groups()
             emoji = normaliza(emoji)
             if emoji in equipos_validos:
                 puntos_por_fecha[fecha_actual][emoji] += int(cantidad)
