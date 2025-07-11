@@ -45,7 +45,6 @@ if texto and calcular:
         match_fecha = re.match(r"\[(\d{1,2}:\d{2}),\s*(\d{1,2}/\d{1,2}/\d{4})\]", linea)
         if match_fecha:
             fecha_actual = match_fecha.group(2)
-            continue
 
         # Aplicar un solo patrón por línea (prioridad alta a baja)
         match = re.search(r"(\d+)\s+puntos\s+a\s+([^\s]+)", linea)
@@ -61,18 +60,17 @@ if texto and calcular:
             emoji, cantidad = match.groups()
             emoji = normaliza(emoji)
             cantidad = cantidad.replace(".", "").replace(",", "")
-            if emoji in equipos_validos:
+            if cantidad.isdigit() and emoji in equipos_validos:
                 puntos_por_fecha[fecha_actual][emoji] += int(cantidad)
             continue
 
-        match = re.search(r"([^\s]+)\s*([\d]+[.,]?[\d]*)$", linea)
+        match = re.match(r"^([^\s]+)\s+([\d]+[.,]?[\d]*)$", linea)
         if match:
             emoji, cantidad = match.groups()
             emoji = normaliza(emoji)
             cantidad = cantidad.replace(".", "").replace(",", "")
-            if emoji in equipos_validos:
+            if cantidad.isdigit() and emoji in equipos_validos:
                 puntos_por_fecha[fecha_actual][emoji] += int(cantidad)
-            continue
 
     # Construcción de resultados por fecha
     filas = []
