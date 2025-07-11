@@ -56,12 +56,13 @@ if texto and calcular:
                 puntos_por_fecha[fecha_actual][emoji] += int(cantidad)
             continue
 
-        match = re.search(r"([^\s]+)\s+([\d,]+)\s+puntos", linea)
+        match = re.search(r"([^\s]+)\s+([\d,.]+)\s+puntos", linea)
         if match:
             emoji, cantidad = match.groups()
             emoji = normaliza(emoji)
+            cantidad = cantidad.replace(".", "").replace(",", "")
             if emoji in equipos_validos:
-                puntos_por_fecha[fecha_actual][emoji] += int(cantidad.replace(",", ""))
+                puntos_por_fecha[fecha_actual][emoji] += int(cantidad)
             continue
 
         match = re.search(r"([^\s]+)\s*([\d]+[.,]?[\d]*)$", linea)
