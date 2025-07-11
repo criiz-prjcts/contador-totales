@@ -35,7 +35,8 @@ if texto and calcular:
     def normaliza(emoji):
         return equivalencias_personalizadas.get(emoji, emoji)
 
-    for linea in texto.splitlines():
+    lineas = texto.splitlines()
+    for i, linea in enumerate(lineas):
         linea = linea.strip()
         if not linea:
             continue
@@ -44,6 +45,7 @@ if texto and calcular:
         match_fecha = re.match(r"\[(\d{1,2}:\d{2}),\s*(\d{1,2}/\d{1,2}/\d{4})\]", linea)
         if match_fecha:
             fecha_actual = match_fecha.group(2)
+            continue
 
         # Aplicar un solo patrón por línea (prioridad alta a baja)
         match = re.search(r"(\d+)\s+puntos\s+a\s+([^\s]+)", linea)
