@@ -2,6 +2,7 @@ import streamlit as st
 import re
 from collections import defaultdict
 import pandas as pd
+import matplotlib.pyplot as plt
 
 st.set_page_config(page_title="Contador de Puntos", page_icon="🎯")
 st.title("🎯 Contador de Puntos por Colegio")
@@ -64,7 +65,6 @@ if texto and calcular:
                 puntos_por_fecha[fecha_actual][emoji] += int(cantidad)
             continue
 
-        # Actualizado para aceptar emojis pegados al número
         match = re.match(r"^([^\d\s]+)\s*([\d]+[.,]?[\d]*)$", linea)
         if match:
             emoji, cantidad = match.groups()
@@ -91,6 +91,19 @@ if texto and calcular:
         df_formatted["Puntos"] = df_formatted["Puntos"].apply(lambda x: f"{x:,}")
         st.dataframe(df_formatted)
         st.download_button("Descargar CSV por fecha", df.to_csv(index=False).encode(), "puntos_por_fecha.csv")
+
+        # Gráfico de líneas por fecha y equipo
+        st.subheader("📈 Evolución de Puntos por Día")
+        df_grafico = df.pivot_table(index="Fecha", columns="Equipo", values="Puntos", aggfunc="sum", fill_value=0)
+        df_grafico = df_grafico.sort_index()
+
+        fig, ax = plt.subplots(figsize=(10, 5))
+        df_grafico.plot(ax=ax, marker="o")
+        ax.set_ylabel("Puntos")
+        ax.set_xlabel("Fecha")
+        ax.set_title("Puntos por Equipo a lo Largo del Tiempo")
+        ax.grid(True)
+        st.pyplot(fig)
 
     resumen = df.groupby("Equipo")["Puntos"].sum().reset_index().sort_values(by="Puntos", ascending=False)
     resumen_str = "\n".join([f"{row['Equipo']}: {row['Puntos']:,} puntos" for _, row in resumen.iterrows()])
