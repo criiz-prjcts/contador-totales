@@ -120,7 +120,6 @@ if texto and calcular:
         st.subheader("📅 Detalle por Fecha")
         df_formatted = df.copy()
         df_formatted["Puntos"] = df_formatted["Puntos"].apply(lambda x: f"{x:,}")
-        df_formatted["Equipo"] = df_formatted["Equipo"].apply(lambda e: etiquetas_equipo.get(e, e))
         st.dataframe(df_formatted)
         st.download_button("Descargar CSV por fecha", df.to_csv(index=False).encode(), "puntos_por_fecha.csv")
 
@@ -142,11 +141,11 @@ if texto and calcular:
         st.pyplot(fig)
 
     resumen = df.groupby("Equipo")["Puntos"].sum().reset_index().sort_values(by="Puntos", ascending=False)
-    resumen_str = "\n".join([f"{etiquetas_equipo.get(row['Equipo'], row['Equipo'])}: {row['Puntos']:,} puntos" for _, row in resumen.iterrows()])
+    resumen_str = "\n".join([f"{emoji}: {row['Puntos']:,} puntos" for _, row in resumen.iterrows() for emoji, nombre in etiquetas_equipo.items() if nombre == etiquetas_equipo.get(row['Equipo']) and row['Equipo'] == emoji])
 
     st.subheader("🏆 Total por Equipo")
     resumen_format = resumen.copy()
-    resumen_format["Equipo"] = resumen_format["Equipo"].apply(lambda e: etiquetas_equipo.get(e, e))
+    resumen_format["Equipo"] = resumen_format["Equipo"].apply(lambda e: f"{e} ({etiquetas_equipo.get(e, e)})")
     resumen_format["Puntos"] = resumen_format["Puntos"].apply(lambda x: f"{x:,}")
     st.dataframe(resumen_format)
     st.download_button("Descargar CSV resumen", resumen.to_csv(index=False).encode(), "resumen_puntos.csv")
