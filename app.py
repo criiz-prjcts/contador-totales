@@ -19,9 +19,40 @@ equivalencias_personalizadas = {
     "💜": "🖤"
 }
 
+# Etiquetas personalizadas por emoji por colegio
+etiquetas_por_colegio = {
+    "Warriors": {
+        "🤍": "blancos",
+        "💙": "azules",
+        "🖤": "negros",
+        "💚": "verdes"
+    },
+    "Ilvermorny": {
+        "❤️": "wampus",
+        "💛": "pukukis",
+        "💚": "serpientes",
+        "💙": "thinder",
+        "🖤": "directoras"
+    }
+}
+
+# Colores personalizados por etiqueta
+tema_colores = {
+    "blancos": "#cccccc",
+    "azules": "#3399ff",
+    "negros": "#222222",
+    "verdes": "#33cc33",
+    "wampus": "#ff4d4d",
+    "pukukis": "#ffcc00",
+    "serpientes": "#00cc66",
+    "thinder": "#3399ff",
+    "directoras": "#9900cc"
+}
+
 # Selector de colegio
 colegio_seleccionado = st.selectbox("Selecciona el colegio:", list(colegios.keys()))
 equipos_validos = set(colegios[colegio_seleccionado])
+etiquetas_equipo = etiquetas_por_colegio[colegio_seleccionado]
 
 # Inputs del usuario
 texto = st.text_area("Pega aquí el historial de mensajes:", height=400)
@@ -89,27 +120,33 @@ if texto and calcular:
         st.subheader("📅 Detalle por Fecha")
         df_formatted = df.copy()
         df_formatted["Puntos"] = df_formatted["Puntos"].apply(lambda x: f"{x:,}")
+        df_formatted["Equipo"] = df_formatted["Equipo"].apply(lambda e: etiquetas_equipo.get(e, e))
         st.dataframe(df_formatted)
         st.download_button("Descargar CSV por fecha", df.to_csv(index=False).encode(), "puntos_por_fecha.csv")
 
-        # Gráfico de líneas por fecha y equipo
+        # Gráfico de líneas por fecha y equipo (sin acumulado)
         st.subheader("📈 Evolución de Puntos por Día")
         df_grafico = df.pivot_table(index="Fecha", columns="Equipo", values="Puntos", aggfunc="sum", fill_value=0)
+        df_grafico = df_grafico.rename(columns=etiquetas_equipo)
         df_grafico = df_grafico.sort_index()
 
         fig, ax = plt.subplots(figsize=(10, 5))
-        df_grafico.plot(ax=ax, marker="o")
+        for columna in df_grafico.columns:
+            df_grafico[columna].plot(ax=ax, marker="o", label=columna, color=tema_colores.get(columna))
+
         ax.set_ylabel("Puntos")
         ax.set_xlabel("Fecha")
         ax.set_title("Puntos por Equipo a lo Largo del Tiempo")
         ax.grid(True)
+        ax.legend(title="Equipo")
         st.pyplot(fig)
 
     resumen = df.groupby("Equipo")["Puntos"].sum().reset_index().sort_values(by="Puntos", ascending=False)
-    resumen_str = "\n".join([f"{row['Equipo']}: {row['Puntos']:,} puntos" for _, row in resumen.iterrows()])
+    resumen_str = "\n".join([f"{etiquetas_equipo.get(row['Equipo'], row['Equipo'])}: {row['Puntos']:,} puntos" for _, row in resumen.iterrows()])
 
     st.subheader("🏆 Total por Equipo")
     resumen_format = resumen.copy()
+    resumen_format["Equipo"] = resumen_format["Equipo"].apply(lambda e: etiquetas_equipo.get(e, e))
     resumen_format["Puntos"] = resumen_format["Puntos"].apply(lambda x: f"{x:,}")
     st.dataframe(resumen_format)
     st.download_button("Descargar CSV resumen", resumen.to_csv(index=False).encode(), "resumen_puntos.csv")
