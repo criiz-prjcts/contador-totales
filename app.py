@@ -40,10 +40,10 @@ if texto and calcular:
         if not linea:
             continue
 
-        match_fecha = re.match(r"\[\d{1,2}:\d{2},\s*(\d{1,2}/\d{1,2}/\d{4})\]", linea)
+        # Extraer fecha de formato tipo [hh:mm, dd/mm/yyyy]
+        match_fecha = re.match(r"\[(\d{1,2}:\d{2}),\s*(\d{1,2}/\d{1,2}/\d{4})\]", linea)
         if match_fecha:
-            fecha_actual = match_fecha.group(1)
-            continue
+            fecha_actual = match_fecha.group(2)
 
         # Aplicar un solo patrón por línea (prioridad alta a baja)
         match = re.search(r"(\d+)\s+puntos\s+a\s+([^\s]+)", linea)
@@ -91,7 +91,9 @@ if texto and calcular:
 
     if desglosado:
         st.subheader("📅 Detalle por Fecha")
-        st.dataframe(df)
+        df_formatted = df.copy()
+        df_formatted["Puntos"] = df_formatted["Puntos"].apply(lambda x: f"{x:,}")
+        st.dataframe(df_formatted)
         st.download_button("Descargar CSV por fecha", df.to_csv(index=False).encode(), "puntos_por_fecha.csv")
 
     resumen = df.groupby("Equipo")["Puntos"].sum().reset_index().sort_values(by="Puntos", ascending=False)
