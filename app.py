@@ -64,7 +64,8 @@ if texto and calcular:
                 puntos_por_fecha[fecha_actual][emoji] += int(cantidad)
             continue
 
-        match = re.match(r"^([^\s]+)\s+([\d]+[.,]?[\d]*)$", linea)
+        # Actualizado para aceptar emojis pegados al número
+        match = re.match(r"^([^\d\s]+)\s*([\d]+[.,]?[\d]*)$", linea)
         if match:
             emoji, cantidad = match.groups()
             emoji = normaliza(emoji)
