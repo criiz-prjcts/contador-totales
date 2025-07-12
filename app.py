@@ -74,15 +74,22 @@ if texto and calcular:
         if not linea:
             continue
 
-        # Extraer fecha de formato tipo [hh:mm, dd/mm/yyyy] o [dd/mm, hh:mm]
-        match_fecha = re.match(r"\[(\d{1,2}/\d{1,2}),\s*(\d{1,2}:\d{2})\]", linea)
-        if match_fecha:
-            dia_mes, hora = match_fecha.groups()
+        # Formatos válidos:
+        # [hh:mm, dd/mm/yyyy]
+        # [dd/mm, hh:mm]
+        # [d/m/yyyy, hh:mm]
+
+        match_fecha_1 = re.match(r"\[(\d{1,2}/\d{1,2}),\s*(\d{1,2}:\d{2})\]", linea)
+        match_fecha_2 = re.match(r"\[(\d{1,2}:\d{2}),\s*(\d{1,2}/\d{1,2}/\d{4})\]", linea)
+        match_fecha_3 = re.match(r"\[(\d{1,2}/\d{1,2}/\d{4}),\s*(\d{1,2}:\d{2})\]", linea)
+
+        if match_fecha_1:
+            dia_mes, _ = match_fecha_1.groups()
             fecha_actual = f"{dia_mes}/{anio_actual}"
-        else:
-            match_fecha_alt = re.match(r"\[(\d{1,2}:\d{2}),\s*(\d{1,2}/\d{1,2}/\d{4})\]", linea)
-            if match_fecha_alt:
-                _, fecha_actual = match_fecha_alt.groups()
+        elif match_fecha_2:
+            _, fecha_actual = match_fecha_2.groups()
+        elif match_fecha_3:
+            fecha_actual, _ = match_fecha_3.groups()
 
         match = re.search(r"(\d+)\s+puntos\s+a\s+([^\s]+)", linea)
         if match:
