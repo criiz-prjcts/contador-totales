@@ -3,6 +3,7 @@ import re
 from collections import defaultdict
 import pandas as pd
 import matplotlib.pyplot as plt
+from datetime import datetime
 
 st.set_page_config(page_title="Contador de Puntos", page_icon="🎯")
 st.title("🎯 Contador de Puntos por Colegio")
@@ -63,22 +64,26 @@ if texto and calcular:
     puntos_por_fecha = defaultdict(lambda: defaultdict(int))
     fecha_actual = "Sin fecha"
 
-    # Normalizar emojis si hay equivalencias
     def normaliza(emoji):
         return equivalencias_personalizadas.get(emoji, emoji)
 
+    anio_actual = datetime.now().year
     lineas = texto.splitlines()
     for i, linea in enumerate(lineas):
         linea = linea.strip()
         if not linea:
             continue
 
-        # Extraer fecha de formato tipo [hh:mm, dd/mm/yyyy]
-        match_fecha = re.match(r"\[(\d{1,2}:\d{2}),\s*(\d{1,2}/\d{1,2}/\d{4})\]", linea)
+        # Extraer fecha de formato tipo [hh:mm, dd/mm/yyyy] o [dd/mm, hh:mm]
+        match_fecha = re.match(r"\[(\d{1,2}/\d{1,2}),\s*(\d{1,2}:\d{2})\]", linea)
         if match_fecha:
-            fecha_actual = match_fecha.group(2)
+            dia_mes, hora = match_fecha.groups()
+            fecha_actual = f"{dia_mes}/{anio_actual}"
+        else:
+            match_fecha_alt = re.match(r"\[(\d{1,2}:\d{2}),\s*(\d{1,2}/\d{1,2}/\d{4})\]", linea)
+            if match_fecha_alt:
+                _, fecha_actual = match_fecha_alt.groups()
 
-        # Aplicar un solo patrón por línea (prioridad alta a baja)
         match = re.search(r"(\d+)\s+puntos\s+a\s+([^\s]+)", linea)
         if match:
             cantidad, emoji = match.groups()
@@ -104,7 +109,6 @@ if texto and calcular:
             if cantidad.isdigit() and emoji in equipos_validos:
                 puntos_por_fecha[fecha_actual][emoji] += int(cantidad)
 
-    # Construcción de resultados por fecha
     filas = []
     for fecha, equipos in sorted(puntos_por_fecha.items()):
         for emoji in equipos:
@@ -123,7 +127,6 @@ if texto and calcular:
         st.dataframe(df_formatted)
         st.download_button("Descargar CSV por fecha", df.to_csv(index=False).encode(), "puntos_por_fecha.csv")
 
-        # Gráfico de líneas por fecha y equipo (sin acumulado)
         st.subheader("📈 Evolución de Puntos por Día")
         df_grafico = df.pivot_table(index="Fecha", columns="Equipo", values="Puntos", aggfunc="sum", fill_value=0)
         df_grafico = df_grafico.rename(columns=etiquetas_equipo)
@@ -141,7 +144,7 @@ if texto and calcular:
         st.pyplot(fig)
 
     resumen = df.groupby("Equipo")["Puntos"].sum().reset_index().sort_values(by="Puntos", ascending=False)
-    resumen_str = "\n".join([f"{emoji}: {row['Puntos']:,} puntos" for _, row in resumen.iterrows() for emoji, nombre in etiquetas_equipo.items() if nombre == etiquetas_equipo.get(row['Equipo']) and row['Equipo'] == emoji])
+    resumen_str = "\n".join([f"{row['Equipo']}: {row['Puntos']:,} puntos" for _, row in resumen.iterrows()])
 
     st.subheader("🏆 Total por Equipo")
     resumen_format = resumen.copy()
